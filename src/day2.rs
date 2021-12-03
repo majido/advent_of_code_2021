@@ -45,13 +45,40 @@ pub fn process_commands(input: &str) -> (u32, u32) {
     final_location
 }
 
+pub fn process_commands2(input: &str) -> (u32, u32, u32) {
+    let commands: Vec<Command> = input
+        .lines()
+        .map(|line: &str| Command::from_str(line).unwrap())
+        .collect();
+
+    // aim, horizontal pos, depth
+    let initial_location = (0, 0, 0);
+    let final_location = commands.iter().fold(
+        initial_location,
+        |(aim, horizontal, depth), command| match command {
+            Command::Forward(i) => (aim, horizontal + i, depth + (aim * i)),
+            Command::Down(i) => (aim + i, horizontal, depth),
+            Command::Up(i) => (aim - i, horizontal, depth),
+        },
+    );
+
+    final_location
+}
+
 pub fn run() {
     let input = fs::read_to_string("./src/input/day2.txt").expect("Missing input file");
-    let result = process_commands(&input);
+    let result1 = process_commands(&input);
     println!(
-        "final location: {:?}, magnitude: {}",
-        result,
-        result.0 * result.1
+        "part 1 - final location: {:?}, magnitude: {}",
+        result1,
+        result1.0 * result1.1
+    );
+
+    let result2 = process_commands2(&input);
+    println!(
+        "part 2 - final location: {:?}, magnitude: {}",
+        result2,
+        result2.1 * result2.2
     );
 }
 
@@ -70,5 +97,6 @@ forward 2
 ";
 
         assert_eq!(process_commands(&input), (15, 10));
+        assert_eq!(process_commands2(&input), (10, 15, 60));
     }
 }
