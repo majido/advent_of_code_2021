@@ -1,8 +1,8 @@
 // https://adventofcode.com/2021/day/1
 use std::fs;
 
-fn main() {
-    let input = fs::read_to_string("./input.txt").expect("Missing input file");
+pub fn run() {
+    let input = fs::read_to_string("./src/input/day1.txt").expect("Missing input file");
     let depths: Vec<i32> = input
         .split_ascii_whitespace()
         .map(|line: &str| line.parse::<i32>().unwrap())
