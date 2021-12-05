@@ -78,9 +78,41 @@ impl BingoBoard {
 
         result.iter().any(|v| *v)
     }
+
+    pub fn value(&self) -> u64{
+        let (winning, other) = self.lines
+            .iter()
+            .fold((0,0), |(winning_line, other_lines), line: &BingoLine| {   
+                match line.is_bingo() {
+                    true => (winning_line + line.value(), other_lines),
+                    false => (winning_line, other_lines + line.value())
+                }
+            });
+
+        winning * other
+    }
 }
 
-fn wining_board_score(input: &str) -> u32 {
+fn run_bingo(calls: Vec<u32>, boards: &mut Vec<BingoBoard>) -> u64 {
+    let mut winner_score : u64 = 0;
+    'bingo: for call in calls.iter() {
+        println!("call {}", call);
+        for board in boards.iter_mut() {
+            // Figure our if observe should have take &u32 instead.
+            let call_value: u32 = *call;
+            if board.observe(call_value) {
+                // Bingo
+                winner_score = board.value();
+                println!("Bingo {:?}", board);
+                break 'bingo;
+            }
+        }
+    }
+
+    winner_score
+}
+
+fn find_winner_score(input: &str) -> u64 {
     let lines: Vec<&str> = input.lines().collect();
     dbg!(&lines);
 
@@ -97,18 +129,11 @@ fn wining_board_score(input: &str) -> u32 {
         })
         .collect();
 
-    for call in calls.iter() {
-        for board in boards.iter_mut() {
-            // Figure our if observe should have take &u32 instead.
-            let call_value: u32 = *call;
-            if board.observe(call_value) {
-                // Bingo
-                println!("Bingo {:?}", board);
-            }
-        }
-    }
-    0
+    let winner_score = run_bingo(calls, &mut boards);
+    winner_score
 }
+
+
 
 pub fn run() {
     // let input = fs::read_to_string("./src/input/day4.txt").expect("Missing input file");
@@ -140,6 +165,6 @@ mod tests {
 22 11 13  6  5
  2  0 12  3  7";
 
-        assert_eq!(wining_board_score(&input), 4512);
+        assert_eq!(find_winner_score(&input), 4512);
     }
 }
