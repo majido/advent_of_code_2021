@@ -46,7 +46,7 @@ struct BingoBoard {
 
 impl BingoBoard {
     pub fn new(board_lines: &[&str]) -> BingoBoard {
-        dbg!(board_lines);
+        // dbg!(board_lines);
         // parse rows
         let row_vlaues: Vec<Vec<u32>> = board_lines
             .iter()
@@ -103,22 +103,31 @@ impl BingoBoard {
     }
 }
 
-fn run_bingo(calls: Vec<u32>, boards: &mut Vec<BingoBoard>) -> u64 {
-    let mut winner_score: u64 = 0;
-    'bingo: for call in calls.iter() {
-        println!("call {}", call);
-        for board in boards.iter_mut() {
+fn run_bingo(calls: Vec<u32>, boards: &mut Vec<BingoBoard>) -> Vec<u64> {
+    let mut winner_scores: Vec<u64> = vec![];
+    let mut completed_boards: Vec<usize> = vec![];
+
+    for call in calls.iter() {
+        // println!("call {}", call);
+        for (index, board) in boards.iter_mut().enumerate() {
+            // skip boards that have won.
+            if completed_boards.contains(&index) {
+                continue;
+            }
+
             // Figure out if observe should have take &u32 instead.
             let call_value: u32 = *call;
             if board.observe(call_value) {
                 // Bingo
-                winner_score = board.unmarked_sum() * call_value as u64;
-                break 'bingo;
+                let winning_score = board.unmarked_sum() * call_value as u64;
+                winner_scores.push(winning_score);
+                completed_boards.push(index);
             }
         }
     }
 
-    winner_score
+    println!("Total completed boards: {}", completed_boards.len());
+    winner_scores
 }
 
 fn find_first_winner_score(input: &str) -> u64 {
@@ -126,8 +135,8 @@ fn find_first_winner_score(input: &str) -> u64 {
 
     let (calls, mut boards) = construct_boards(lines);
 
-    let winner_score = run_bingo(calls, &mut boards);
-    winner_score
+    let winner_scores = run_bingo(calls, &mut boards);
+    winner_scores[0]
 }
 
 fn find_last_winner_score(input: &str) -> u64 {
@@ -135,8 +144,9 @@ fn find_last_winner_score(input: &str) -> u64 {
 
     let (calls, mut boards) = construct_boards(lines);
 
-    let winner_score = run_bingo(calls, &mut boards);
-    winner_score
+    let winner_scores = run_bingo(calls, &mut boards);
+    let last_score: u64 = *winner_scores.last().unwrap();
+    last_score
 }
 
 fn construct_boards(lines: Vec<&str>) -> (Vec<u32>, Vec<BingoBoard>) {
@@ -144,19 +154,28 @@ fn construct_boards(lines: Vec<&str>) -> (Vec<u32>, Vec<BingoBoard>) {
         .split(",")
         .map(|v| v.parse::<u32>().expect("error parsing calls"))
         .collect();
-    let mut boards: Vec<BingoBoard> = lines[1..]
+
+    let boards: Vec<BingoBoard> = lines[1..]
         .split(|line| line.is_empty())
         .filter_map(|lines| match lines.len() {
             0 => None,
             _ => Some(BingoBoard::new(lines)),
         })
         .collect();
+
     (calls, boards)
 }
 
 pub fn run() {
     let input = fs::read_to_string("./src/input/day4.txt").expect("Missing input file");
-    println!("day4 - Winner score: {}", find_first_winner_score(&input))
+    println!(
+        "day4 - First winner score: {}",
+        find_first_winner_score(&input)
+    );
+    println!(
+        "day4 - Last winner score: {}",
+        find_last_winner_score(&input)
+    );
 }
 
 #[cfg(test)]
