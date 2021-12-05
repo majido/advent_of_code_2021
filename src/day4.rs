@@ -1,7 +1,6 @@
 use std::{fs, iter::Iterator};
 
 #[derive(Debug)]
-
 struct BingoLine {
     values: Vec<u32>,
     matched: Vec<u32>,
@@ -9,6 +8,7 @@ struct BingoLine {
 
 impl BingoLine {
     pub fn new(values: &[u32]) -> BingoLine {
+        // TODO: This could be (u32, bool) instead of two vectors.
         BingoLine {
             values: Vec::from(values),
             matched: Vec::new(),
@@ -42,6 +42,7 @@ impl BingoLine {
 struct BingoBoard {
     rows: Vec<BingoLine>,
     columns: Vec<BingoLine>,
+    is_complete: bool,
 }
 
 impl BingoBoard {
@@ -79,7 +80,11 @@ impl BingoBoard {
             .map(|values: &Vec<u32>| BingoLine::new(&values))
             .collect();
 
-        BingoBoard { rows, columns }
+        BingoBoard {
+            rows,
+            columns,
+            is_complete: false,
+        }
     }
 
     pub fn observe(&mut self, value: u32) -> bool {
@@ -90,7 +95,9 @@ impl BingoBoard {
             .map(|line: &mut BingoLine| line.observe(value))
             .collect();
 
-        result.iter().any(|v| *v)
+        self.is_complete = result.iter().any(|v| *v);
+
+        self.is_complete
     }
 
     pub fn unmarked_sum(&self) -> u64 {
@@ -101,32 +108,31 @@ impl BingoBoard {
 
         sum_unmarked
     }
+
+    pub fn is_complete(&self) -> bool {
+        self.is_complete
+    }
 }
 
 fn run_bingo(calls: Vec<u32>, boards: &mut Vec<BingoBoard>) -> Vec<u64> {
     let mut winner_scores: Vec<u64> = vec![];
-    let mut completed_boards: Vec<usize> = vec![];
 
     for call in calls.iter() {
-        // println!("call {}", call);
-        for (index, board) in boards.iter_mut().enumerate() {
+        for board in boards.iter_mut() {
             // skip boards that have won.
-            if completed_boards.contains(&index) {
+            if board.is_complete() {
                 continue;
             }
 
-            // Figure out if observe should have take &u32 instead.
-            let call_value: u32 = *call;
-            if board.observe(call_value) {
-                // Bingo
-                let winning_score = board.unmarked_sum() * call_value as u64;
+            // TODO: Figure out if observe should have taken &u32 instead.
+            // Bingo
+            if board.observe(*call) {
+                let winning_score = board.unmarked_sum() * *call as u64;
                 winner_scores.push(winning_score);
-                completed_boards.push(index);
             }
         }
     }
 
-    println!("Total completed boards: {}", completed_boards.len());
     winner_scores
 }
 
@@ -204,6 +210,7 @@ mod tests {
 22 11 13  6  5
  2  0 12  3  7";
 
-        assert_eq!(find_winner_score(&input), 4512);
+        assert_eq!(find_first_winner_score(&input), 4512);
+        assert_eq!(find_last_winner_score(&input), 1924);
     }
 }
