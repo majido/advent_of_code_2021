@@ -1,6 +1,6 @@
-mod day4;
+mod day5;
 
 #[allow(dead_code)]
 fn main() {
-    day4::run();
+    day5::run();
 }
