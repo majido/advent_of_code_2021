@@ -1,43 +1,54 @@
-fn parse_input(input: &str) -> Vec<u8> {
-    input.trim()
+type FishTab = [usize; 9];
+
+fn parse_input(input: &str) -> FishTab {
+    let fish: Vec<u8> = input
+        .trim()
         .split(",")
         .map(|fish| fish.parse().expect("failed to parse fish"))
-        .collect()
+        .collect();
+
+    let mut fish_tab: FishTab = [0; 9];
+    for f in fish {
+        fish_tab[f as usize] += 1;
+    }
+
+    fish_tab
 }
 
-fn run_a_day(population: Vec<u8>) -> Vec<u8> {
+fn run_a_day(population: FishTab) -> FishTab {
     // consume the old poplation and generate a new one
-    let mut new_population: Vec<u8> = vec![];
-    for fish in population {
-        match fish {
-            0 => {
-                // reset this fish and add a new born
-                new_population.push(6u8);
-                new_population.push(8u8);
-            }
-            _ => new_population.push(fish - 1),
-        };
+    let mut new_population: FishTab = [0; 9];
+
+    // reset fish at 0 and add same amount of new borns
+    new_population[6] += population[0];
+    new_population[8] += population[0];
+    for age in 1..population.len() {
+        new_population[age - 1] += population[age];
     }
     new_population
 }
 
-fn part_one(input: &str, days: usize) -> usize {
-    let mut population: Vec<u8> = parse_input(input);
+fn count_fish(input: &str, days: usize) -> usize {
+    let mut population: FishTab = parse_input(input);
 
-    for i in 0..days {
+    for _i in 0..days {
         // run a day simulation
         population = run_a_day(population);
-        //println!("{} -> fish:{}", i, population.len());
+        //println!("{} -> fish:{}", _i, (population.iter().sum::<usize>()));
     }
 
-    population.len()
+    population.iter().sum()
 }
 
 pub fn run() {
     let input = std::fs::read_to_string("./src/input/day6.txt").expect("Missing input file");
     println!(
-        "day6 - p1 - number of lanterfish after 80: {}",
-        part_one(&input, 80)
+        "day6/p1 - number of lanternfish after 80: {}",
+        count_fish(&input, 80)
+    );
+    println!(
+        "day6/p2 - number of lanternfish after 256: {}",
+        count_fish(&input, 256)
     )
 }
 
@@ -48,11 +59,8 @@ mod tests {
     #[test]
     fn sample() {
         let input = "3,4,3,1,2";
-
-        assert_eq!(part_one(&input, 18), 26);
-        assert_eq!(part_one(&input, 80), 5934);
-        // trick question :), it is going to consume all my ram.
-        //assert_eq!(part_one(&input, 256), 26984457539);
-
+        assert_eq!(count_fish(&input, 18), 26);
+        assert_eq!(count_fish(&input, 80), 5934);
+        assert_eq!(count_fish(&input, 256), 26984457539);
     }
 }
